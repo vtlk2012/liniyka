@@ -1,0 +1,69 @@
+:root {
+    --ruler-width: 24px;
+    --btn-resize-width: 12px;
+    --btn-resize-height: 12px;
+}
+
+body {
+    padding: 0;
+    margin: 0;
+    font: Arial;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.container {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+}
+
+.ruler {
+    background-color: rgba(76, 175, 80, .5);
+    position: absolute;
+    z-index: 2;
+    -webkit-app-region: drag;
+    display: flex;
+    font-family: Arial;
+    font-size: 12px;
+}
+
+.ruler.ruler--horizontal {
+    height: var(--ruler-width);
+    top: 0;
+    left: var(--ruler-width);
+    right: 0;
+    justify-content: center;
+    align-items: center;
+}
+
+.ruler.ruler--vertical {
+    width: var(--ruler-width);
+    top: var(--ruler-width);
+    left: 0;
+    bottom: 0;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.ruler.ruler--vertical .size {
+    transform: rotate(-90deg);
+}
+
+.red-lines {
+    border: 1px solid red;
+    position: absolute;
+    top: var(--ruler-width);
+    right: 0;
+    bottom: 0;
+    left: var(--ruler-width);
+    z-index: 1;
+}
+
+.size {
+    color: #fff;
+    font-style: 12px;
+}
