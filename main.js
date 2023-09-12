@@ -1,5 +1,10 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
+const rememberBounds = require('./scripts/remember-bounds')
+
+ipcMain.on('windowResized', () => {
+  console.log('windowResized')
+})
 
 function createWindow () {
   const win = new BrowserWindow({
@@ -32,6 +37,8 @@ function createWindow () {
       win.setBounds({
         y: bounds.y + (input.shift ? 10 : 1)
       })
+
+      rememberBounds(win.getBounds())
     }
 
     if (input.type === 'keyDown' && input.key === 'ArrowUp') {
@@ -48,6 +55,8 @@ function createWindow () {
       win.setBounds({
         y: bounds.y - (input.shift ? 10 : 1)
       })
+
+      rememberBounds(win.getBounds())
     }
 
     if (input.type === 'keyDown' && input.key === 'ArrowLeft') {
@@ -64,6 +73,8 @@ function createWindow () {
       win.setBounds({
         x: bounds.x - (input.shift ? 10 : 1)
       })
+
+      rememberBounds(win.getBounds())
     }
 
     if (input.type === 'keyDown' && input.key === 'ArrowRight') {
@@ -80,6 +91,8 @@ function createWindow () {
       win.setBounds({
         x: bounds.x + (input.shift ? 10 : 1)
       })
+
+      rememberBounds(win.getBounds())
     }
   })
 }
