@@ -1,9 +1,22 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
-const rememberBounds = require('./scripts/remember-bounds')
+const { rememberBounds } = require('./scripts/remember-bounds')
 
 ipcMain.on('windowResized', () => {
   console.log('windowResized')
+})
+
+ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  win.setIgnoreMouseEvents(ignore, options)
+})
+
+ipcMain.on('restore-window-bounds', (event, payload, options) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+
+  if (payload) {
+    win.setBounds(payload)
+  }
 })
 
 function createWindow () {
@@ -31,6 +44,8 @@ function createWindow () {
           height: bounds.height + (input.shift ? 10 : 1)
         })
 
+        rememberBounds(win.getBounds())
+
         return
       }
 
@@ -48,6 +63,8 @@ function createWindow () {
         win.setBounds({
           height: bounds.height - (input.shift ? 10 : 1)
         })
+
+        rememberBounds(win.getBounds())
 
         return
       }
@@ -67,6 +84,8 @@ function createWindow () {
           width: bounds.width - (input.shift ? 10 : 1)
         })
 
+        rememberBounds(win.getBounds())
+
         return
       }
 
@@ -84,6 +103,8 @@ function createWindow () {
         win.setBounds({
           width: bounds.width + (input.shift ? 10 : 1)
         })
+
+        rememberBounds(win.getBounds())
 
         return
       }
