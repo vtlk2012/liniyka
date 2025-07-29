@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron-forge start",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "electron-forge make --trace-deprecation"
   },
   "author": "",
   "license": "ISC",
@@ -20,13 +20,10 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.4.0",
     "@electron-forge/plugin-fuses": "^7.4.0",
     "@electron/fuses": "^1.8.0",
+    "@eslint/js": "^9.32.0",
     "electron": "^31.1.0",
-    "eslint": "^8.23.1",
-    "eslint-config-standard": "^17.0.0",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-n": "^15.2.5",
-    "eslint-plugin-promise": "^6.0.1",
-    "eslint-plugin-vue": "^9.5.1"
+    "eslint": "^9.32.0",
+    "globals": "^16.3.0"
   },
   "dependencies": {
     "electron": "^31.1.0",

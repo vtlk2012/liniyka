@@ -1,135 +1,139 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
-const path = require('path')
-const { rememberBounds } = require('./scripts/remember-bounds')
+const { app, BrowserWindow, ipcMain, Menu } = require('electron');
+const path = require('path');
+const hotKeys = require('./scripts/hot-keys');
 
-ipcMain.on('windowResized', () => {
-  console.log('windowResized')
-})
+let windowsLocked = false;
 
-ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
-  const win = BrowserWindow.fromWebContents(event.sender)
-  win.setIgnoreMouseEvents(ignore, options)
-})
+const windows = {};
 
-ipcMain.on('restore-window-bounds', (event, payload, options) => {
-  const win = BrowserWindow.fromWebContents(event.sender)
+function createWindow() {
+    const win = new BrowserWindow({
+        width: 800,
+        height: 600,
+        frame: false,
+        transparent: true,
+        alwaysOnTop: true,
+        hasShadow: false,
+        roundedCorners: false,
+        icon: path.join(__dirname, 'images/icon.ico'),
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js')
+        }
+    });
 
-  if (payload) {
-    win.setBounds(payload)
-  }
-})
+    win.loadFile('index.html');
 
-function createWindow () {
-  const win = new BrowserWindow({
-    width: 800,
-    height: 600,
-    frame: false,
-    transparent: true,
-    alwaysOnTop: true,
-    hasShadow: false,
-    roundedCorners: false,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js')
-    }
-  })
+    win.webContents.on('before-input-event', (event, input) => {
+        hotKeys({ win, input, windows, windowsLocked });
+    });
 
-  win.loadFile('index.html')
+    windows[win.id] = win;
 
-  win.webContents.on('before-input-event', (event, input) => {
-    if (input.type === 'keyDown' && input.key === 'ArrowDown') {
-      const bounds = win.getBounds()
+    win.on('closed', () => {
+        delete windows[win.id];
+    });
 
-      if (input.alt) {
-        win.setBounds({
-          height: bounds.height + (input.shift ? 10 : 1)
-        })
+    win.on('resize', () => {
+        if (windowsLocked) {
+            const { width, height } = win.getBounds();
 
-        rememberBounds(win.getBounds())
+            const wns = BrowserWindow.getAllWindows();
 
-        return
-      }
+            for (let i = 0; i < wns.length; i++) {
+                if (wns[i].id !== win.id) {
+                    wns[i].setBounds({
+                        width,
+                        height
+                    });
+                }
+            }
 
-      win.setBounds({
-        y: bounds.y + (input.shift ? 10 : 1)
-      })
-
-      rememberBounds(win.getBounds())
-    }
-
-    if (input.type === 'keyDown' && input.key === 'ArrowUp') {
-      const bounds = win.getBounds()
-
-      if (input.alt) {
-        win.setBounds({
-          height: bounds.height - (input.shift ? 10 : 1)
-        })
-
-        rememberBounds(win.getBounds())
-
-        return
-      }
-
-      win.setBounds({
-        y: bounds.y - (input.shift ? 10 : 1)
-      })
-
-      rememberBounds(win.getBounds())
-    }
-
-    if (input.type === 'keyDown' && input.key === 'ArrowLeft') {
-      const bounds = win.getBounds()
-
-      if (input.alt) {
-        win.setBounds({
-          width: bounds.width - (input.shift ? 10 : 1)
-        })
-
-        rememberBounds(win.getBounds())
-
-        return
-      }
-
-      win.setBounds({
-        x: bounds.x - (input.shift ? 10 : 1)
-      })
-
-      rememberBounds(win.getBounds())
-    }
-
-    if (input.type === 'keyDown' && input.key === 'ArrowRight') {
-      const bounds = win.getBounds()
-
-      if (input.alt) {
-        win.setBounds({
-          width: bounds.width + (input.shift ? 10 : 1)
-        })
-
-        rememberBounds(win.getBounds())
-
-        return
-      }
-
-      win.setBounds({
-        x: bounds.x + (input.shift ? 10 : 1)
-      })
-
-      rememberBounds(win.getBounds())
-    }
-  })
+        }
+    });
 }
 
 app.whenReady().then(() => {
-  createWindow()
+    ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
-    }
-  })
-})
+        win?.setIgnoreMouseEvents(ignore, options);
+    });
+
+    createWindow();
+
+    const isMac = process.platform === 'darwin';
+
+    const macAppMenu = {
+        label: app.name,
+        submenu: [
+            { role: 'about' },
+            { type: 'separator' },
+            { role: 'services' },
+            { type: 'separator' },
+            { role: 'hide' },
+            { role: 'hideOthers' },
+            { role: 'unhide' },
+            { type: 'separator' },
+            { role: 'quit' }
+        ]
+    };
+
+    const fileMenu = {
+        label: 'File',
+        submenu: [isMac ? { role: 'close' } : { role: 'quit' }]
+    };
+
+    const windowMenu = {
+        label: 'Window',
+        submenu: [
+            { role: 'minimize' },
+            { role: 'zoom' },
+            { type: 'separator' },
+            {
+                label: 'New window',
+                click: () => {
+                    createWindow();
+                }
+            },
+            { type: 'separator' },
+            {
+                label: 'Lock windows',
+                click: () => { windowsLocked = true; }
+            },
+            { type: 'separator' },
+            {
+                label: 'Unlock windows',
+                click: () => { windowsLocked = false; }
+            },
+            ...(isMac
+                ? [
+                        { type: 'separator' },
+                        { role: 'front' },
+                        { type: 'separator' },
+                        { role: 'window' }
+                    ]
+                : [{ role: 'close' }])
+        ]
+    };
+
+    const template = [
+        isMac ? macAppMenu : {},
+        fileMenu,
+        windowMenu
+    ];
+
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
+
+    app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) {
+            createWindow();
+        }
+    });
+});
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
+    if (process.platform !== 'darwin') {
+        app.quit();
+    }
+});

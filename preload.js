@@ -1,19 +1,7 @@
-const ipcRenderer = require('electron').ipcRenderer
+const { contextBridge, ipcRenderer } = require('electron/renderer');
 
-window.addEventListener('resize', () => {
-  ipcRenderer.send('windowResized')
-})
+contextBridge.exposeInMainWorld('electronAPI', {
+    setIgnoreMouseEventsTrue: () => ipcRenderer.send('set-ignore-mouse-events', true, { forward: true }),
 
-window.addEventListener('DOMContentLoaded', () => {
-  const el = document.getElementById('clickThroughElement')
-
-  el.addEventListener('mouseenter', () => {
-    ipcRenderer.send('set-ignore-mouse-events', true, { forward: true })
-  })
-
-  el.addEventListener('mouseleave', () => {
-    ipcRenderer.send('set-ignore-mouse-events', false)
-  })
-
-  ipcRenderer.send('restore-window-bounds', localStorage.getItem('windowBounds'))
-})
+    setIgnoreMouseEventsFalse: () => ipcRenderer.send('set-ignore-mouse-events', false)
+});
