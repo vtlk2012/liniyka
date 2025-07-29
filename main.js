@@ -17,7 +17,7 @@ function createWindow() {
         roundedCorners: false,
         icon: path.join(__dirname, 'images/icon.ico'),
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js')
+            preload: path.join(__dirname, 'scripts/preload.js')
         }
     });
 
